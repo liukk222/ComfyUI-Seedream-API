@@ -90,7 +90,7 @@ class VolcanoEngineAPINode:
                     "max": 1.0,
                     "step": 0.05
                 }),
-                "size": (["auto", "1K", "2K", "4K"],),
+                "size": (["auto", "1K", "2K", "4K","1240x1844"],),
                 "watermark": ("BOOLEAN", {"default": False}),
                 "sequential_image_generation": (["disabled", "auto"],),
                 "max_images": ("INT", {"default": 1, "min": 1, "max": 15, "step": 1}),
