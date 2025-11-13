@@ -90,7 +90,10 @@ class VolcanoEngineAPINode:
                     "max": 1.0,
                     "step": 0.05
                 }),
-                "size": (["auto", "1K", "2K", "4K","1240x1844"],),
+                "size": ("STRING", {
+                    "multiline": False,
+                    "default": "auto"
+                }),
                 "watermark": ("BOOLEAN", {"default": False}),
                 "sequential_image_generation": (["disabled", "auto"],),
                 "max_images": ("INT", {"default": 1, "min": 1, "max": 15, "step": 1}),
@@ -101,7 +104,45 @@ class VolcanoEngineAPINode:
     FUNCTION = "generate_image"
     CATEGORY = "Volcano Engine API"
 
+    def validate_size(self, size):
+        """验证并标准化尺寸参数"""
+        if size == "auto":
+            return size
+        
+        # 检查是否为预设尺寸
+        preset_sizes = ["1K", "2K", "4K", "2760x4096"]
+        if size in preset_sizes:
+            return size
+        
+        # 检查是否为自定义像素值格式 (如 "2048x2048")
+        if 'x' in size:
+            try:
+                width, height = map(int, size.lower().split('x'))
+                
+                # 验证尺寸限制
+                if width > 4096 or height > 4096:
+                    print(f"ERROR: 尺寸 {size} 超过最大限制 4096x4096")
+                    return None
+                
+                if width <= 0 or height <= 0:
+                    print(f"ERROR: 尺寸 {size} 必须为正整数")
+                    return None
+                
+                return size
+            except ValueError:
+                print(f"ERROR: 无效的尺寸格式 '{size}'，应为 '宽度x高度' 格式，如 '2048x2048'")
+                return None
+        
+        print(f"ERROR: 无效的尺寸 '{size}'，支持格式: auto, 1K, 2K, 4K, 2728x4096, 或自定义如 '2048x2048'")
+        return None
+
     def generate_image(self, image, api_url, api_key, prompt, seed, model, strength, size, watermark, sequential_image_generation, max_images):
+
+        # 验证尺寸参数
+        validated_size = self.validate_size(size)
+        if validated_size is None:
+            print("ERROR: 尺寸参数验证失败，使用默认值 'auto'")
+            validated_size = "auto"
 
         if not api_url:
             print("ERROR: API URL is empty.")
@@ -138,8 +179,8 @@ class VolcanoEngineAPINode:
             "watermark": watermark
         }
 
-        if size != "auto":
-            payload['size'] = size
+        if validated_size != "auto":
+            payload['size'] = validated_size
 
         if sequential_image_generation == "auto":
             payload['sequential_image_generation'] = "auto"
